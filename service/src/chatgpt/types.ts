@@ -17,3 +17,7 @@ export interface SetProxyOptions {
 export interface UsageResponse {
   total_usage: number
 }
+
+export interface TotalResponse {
+  hard_limit_usd: number
+}

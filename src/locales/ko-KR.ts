@@ -72,6 +72,7 @@ export default {
     httpsProxy: 'HTTPS 프록시',
     balance: 'API 잔액',
     monthlyUsage: '월 사용량',
+    totalUsage: '총 사용량',
   },
   store: {
     siderButton: '프롬프트 저장소',
@@ -88,6 +89,6 @@ export default {
     importError: '키 값 불일치',
     importRepeatTitle: '제목이 반복되어 건너뜀: {msg}',
     importRepeatContent: '내용이 반복되어 건너뜀: {msg}',
-    onlineImportWarning: '참고: JSON 파일 소스를 확인하십시오!',    
+    onlineImportWarning: '참고: JSON 파일 소스를 확인하십시오!',
   },
 }

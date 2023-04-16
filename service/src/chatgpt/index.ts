@@ -8,7 +8,7 @@ import fetch from 'node-fetch'
 import { sendResponse } from '../utils'
 import { isNotEmptyString } from '../utils/is'
 import type { ApiModel, ChatContext, ChatGPTUnofficialProxyAPIOptions, ModelConfig } from '../types'
-import type { RequestOptions, SetProxyOptions, UsageResponse } from './types'
+import type { RequestOptions, SetProxyOptions, TotalResponse, UsageResponse } from './types'
 
 const { HttpsProxyAgent } = httpsProxyAgent
 
@@ -118,6 +118,35 @@ async function chatReplyProcess(options: RequestOptions) {
   }
 }
 
+async function fetchTotal() {
+  const OPENAI_API_KEY = process.env.OPENAI_API_KEY
+  const OPENAI_API_BASE_URL = process.env.OPENAI_API_BASE_URL
+  const API_BASE_URL = isNotEmptyString(OPENAI_API_BASE_URL)
+    ? OPENAI_API_BASE_URL
+    : 'https://api.openai.com'
+  const urlTotalUsage = `${API_BASE_URL}/v1/dashboard/billing/subscription`
+  const headers = {
+    'Authorization': `Bearer ${OPENAI_API_KEY}`,
+    'Content-Type': 'application/json',
+  }
+  const options = {} as SetProxyOptions
+  setupProxy(options)
+  try {
+    // 获取已使用量
+    const TotalUsageResponse = await options.fetch(urlTotalUsage, { headers })
+
+    if (!TotalUsageResponse.ok)
+      throw new Error('获取总金额失败')
+
+    const TotalUsage = (await TotalUsageResponse.json() as TotalResponse)?.hard_limit_usd
+    return Promise.resolve(TotalUsage ? `$${TotalUsage}` : '-')
+  }
+  catch (error) {
+    global.console.log(error)
+    return Promise.resolve('-')
+  }
+}
+
 async function fetchUsage() {
   const OPENAI_API_KEY = process.env.OPENAI_API_KEY
   const OPENAI_API_BASE_URL = process.env.OPENAI_API_BASE_URL
@@ -170,6 +199,7 @@ function formatDate(): string[] {
 
 async function chatConfig() {
   const usage = await fetchUsage()
+  const totalUsage = await fetchTotal()
   const reverseProxy = process.env.API_REVERSE_PROXY ?? '-'
   const httpsProxy = (process.env.HTTPS_PROXY || process.env.ALL_PROXY) ?? '-'
   const socksProxy = (process.env.SOCKS_PROXY_HOST && process.env.SOCKS_PROXY_PORT)
@@ -177,7 +207,7 @@ async function chatConfig() {
     : '-'
   return sendResponse<ModelConfig>({
     type: 'Success',
-    data: { apiModel, reverseProxy, timeoutMs, socksProxy, httpsProxy, usage },
+    data: { apiModel, reverseProxy, timeoutMs, socksProxy, httpsProxy, usage, totalUsage },
   })
 }
 
